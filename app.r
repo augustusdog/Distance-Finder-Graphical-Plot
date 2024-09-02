@@ -43,7 +43,7 @@ server <- function(input, output, session) {
   # Function to read serial data
   read_serial_data <- function() {
     tryCatch({
-      data <- read.serialConnection(con, n = 1)  # Assuming you want to read 1 byte of data
+      data <- read.serialConnection(con)  # Assuming you want to read 1 byte of data
       as.integer(data)
     }, error = function(e) {
       NA  # Return NA if there's an error
@@ -53,8 +53,8 @@ server <- function(input, output, session) {
   # Reactive value to store serial data
   serial_data <- reactiveVal(NA)
 
-  # Setup a reactive timer to trigger every 2000 ms
-  autoInvalidate <- reactiveTimer(1000)
+  # Setup a reactive timer to trigger every 500 ms
+  autoInvalidate <- reactiveTimer(500)
 
   #set global count variable - which should activate when nrow(df) exceeds 10
   count <<- 0
@@ -71,7 +71,7 @@ server <- function(input, output, session) {
         # Update the dataframe
         df <<- rbind(df, data.frame(x = new_x, y = new_y))
         
-        if (nrow(df)==10){
+        if (nrow(df)==11){
             df <<- df[-1,]
             #when dataframe reaches size of 10, next angle will consider count
             count <<- count + 1
@@ -92,8 +92,8 @@ server <- function(input, output, session) {
     ggplot(df, aes(x, y)) +
       geom_point() +
       labs(x = "lol", y = "distance") +
-      scale_y_continuous(limits = c(-20, 20), breaks = seq(-20, 20, by = 10)) +
-      scale_x_continuous(limits = c(-20, 20), breaks = seq(-20, 20, by = 10))
+      scale_y_continuous(limits = c(-200, 200), breaks = seq(-200, 200, by = 100)) +
+      scale_x_continuous(limits = c(-200, 200), breaks = seq(-200, 200, by = 100))
   })
 
   observeEvent(input$terminate_app, {

@@ -41,6 +41,7 @@ void loop() {
   if (time > target*1000){
     target += 1;
     Serial.println(distance);
+    Serial.print("\n");
 
       // Rotate CW slowly at 10 RPM
       
