@@ -24,6 +24,17 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   # Initialize plot log dataframe
   df <- data.frame(x = numeric(0), y = numeric(0))
+  df2 <- data.frame(x = 0, y = 0)
+
+  #function to generate geom segment plot points
+  load_df2 <- function(){
+    for (i in 1:10){
+      x <- 200 * sin(36 * i * pi / 180)
+      y <- 200 * cos(36 * i * pi / 180)
+      df2 <<- rbind(df2, data.frame(x = x, y = y))
+    }
+ }
+
 
   # Setup serial connection once
   con <- serialConnection(
@@ -42,6 +53,9 @@ server <- function(input, output, session) {
 
   # Function to read serial data
   read_serial_data <- function() {
+    if(length(df2)<3){
+      load_df2()    
+    }
     tryCatch({
       data <- read.serialConnection(con)  # Assuming you want to read 1 byte of data
       as.integer(data)
@@ -68,9 +82,12 @@ server <- function(input, output, session) {
         new_x <- new_data * sin(36 * (nrow(df)+count) * pi / 180)
         new_y <- new_data * cos(36 * (nrow(df)+count) * pi / 180)
 
+        x_end <<- 200 * sin(36 * (nrow(df)+count) * pi / 180)
+        y_end <<- 200 * cos(36 * (nrow(df)+count) * pi / 180)
+
         # Update the dataframe
         df <<- rbind(df, data.frame(x = new_x, y = new_y))
-        
+
         if (nrow(df)==11){
             df <<- df[-1,]
             #when dataframe reaches size of 10, next angle will consider count
@@ -89,11 +106,14 @@ server <- function(input, output, session) {
   output$scatter <- renderPlot({
     autoInvalidate()
 
-    ggplot(df, aes(x, y)) +
-      geom_point() +
+    ggplot() +
+      geom_point(data = df, aes(x = x, y = y), color="blue") +
+      geom_point(data = df2, aes(x = x, y = y), color="red") +
+      geom_segment(aes(x = 0, y = 0, xend = x_end, yend = y_end, color = "red"), data = df2) +
       labs(x = "lol", y = "distance") +
       scale_y_continuous(limits = c(-200, 200), breaks = seq(-200, 200, by = 100)) +
-      scale_x_continuous(limits = c(-200, 200), breaks = seq(-200, 200, by = 100))
+      scale_x_continuous(limits = c(-200, 200), breaks = seq(-200, 200, by = 100)) +
+      coord_fixed(ratio = 1)
   })
 
   observeEvent(input$terminate_app, {
